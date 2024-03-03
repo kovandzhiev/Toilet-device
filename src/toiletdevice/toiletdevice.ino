@@ -4,7 +4,7 @@
 // Supported boards:
 //		All KMP ProDino MKR Zero series (https://kmpelectronics.eu/product-category/arduino-mkr-zero/)
 // Description:
-//		Manage toilet room devices. LED light and Fan
+//		Manage toilet room devices. A LED light and a Fan
 // Version: 1.0.0
 // Date: 03.03.2024
 // Author: Plamen Kovandzhiev <kovandjiev@gmail.com>
