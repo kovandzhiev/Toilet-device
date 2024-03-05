@@ -2,7 +2,7 @@
 // Plamen Kovandzhiev's home projects
 // Web: https://github.com/kovandzhiev/Toilet-device
 // Supported boards:
-//		All KMP ProDino MKR Zero series (https://kmpelectronics.eu/products/prodino-mkr-zero-v1/)
+//		PRODINo WIFI-ESP WROOM-02 V1 (https://kmpelectronics.eu/products/prodino-wifi-esp-wroom-02-v1/)
 // Description:
 //		Manage toilet room devices. A LED light and a Fan
 // Used libraries:
@@ -11,8 +11,7 @@
 // Date: 03.03.2024
 // Author: Plamen Kovandzhiev <kovandjiev@gmail.com>
 
-#include "KMPProDinoMKRZero.h"
-#include "KMPCommon.h"
+#include "KMPDinoWiFiESP.h"
 #include "FluentLight.h"
 
 #define DEBUG
@@ -20,22 +19,29 @@
 
 bool _movements[2] {false, false};
 unsigned long _fanOffTime;
-FluentLight _ledLight(GROVE_D0);
+FluentLight _ledLight(EXT_GROVE_D0);
 
 void setup()
 {
-	delay(5000);
+	delay(5000); // Do not block upload of new sketch
 #ifdef DEBUG
 	Serial.begin(115200);
+	Serial.println("Starting...");
 #endif
+
+	KMPDinoWiFiESP.init();
+
 	_ledLight.setMaxBrightness(1024);
+	//_ledLight.setLightOnDuration(3 * 60 * 1000); // 3 minutes
+	// For test purposes
+	_ledLight.setOnDuration(10 * 1000);
+	_ledLight.setLightOnDuration(10 * 1000);
+	_ledLight.setLightOffDuration(10 * 1000);
+
 	_ledLight.begin();
 
-	// Init Dino board. Set pins.
-	KMPProDinoMKRZero.init(ProDino_MKR_Zero);
-
 #ifdef DEBUG
-	Serial.println("The example RS485Relay is started.");
+	Serial.println("The toilet device is started.");
 #endif
 }
 
@@ -48,13 +54,13 @@ void loop() {
 void processLedLampLogic() {
 	bool motionDetected = false;
 
-	bool pirInput = KMPProDinoMKRZero.GetOptoInState(OptoIn1);
+	bool pirInput = KMPDinoWiFiESP.GetOptoInState(OptoIn1);
 	if(pirInput != _movements[0]) {
 		motionDetected = true;
 		_movements[0] = pirInput;
 	}
 
-	bool doorInput = KMPProDinoMKRZero.GetOptoInState(OptoIn2);
+	bool doorInput = KMPDinoWiFiESP.GetOptoInState(OptoIn2);
 	if(doorInput != _movements[1]) {
 		motionDetected = true;
 		_movements[1] = doorInput;
@@ -62,11 +68,14 @@ void processLedLampLogic() {
 
 	if(motionDetected) {
 		_ledLight.on();
+#ifdef DEBUG
+		Serial.println("Light On");
+#endif
 	}
 }
 
 void processFanLogic() {
-	bool fanInput = KMPProDinoMKRZero.GetOptoInState(OptoIn3);
+	bool fanInput = KMPDinoWiFiESP.GetOptoInState(OptoIn3);
 	bool fanOn = false;
 	if(fanInput) {
 		// Add another xx minutes
@@ -75,16 +84,16 @@ void processFanLogic() {
 	}
 
 	// The fan has to be On and now is off -> swich On the fan relay
-	if(fanOn && !KMPProDinoMKRZero.GetRelayState(Relay1)) {
-		KMPProDinoMKRZero.SetRelayState(Relay1, true);
+	if(fanOn && !KMPDinoWiFiESP.GetRelayState(Relay1)) {
+		KMPDinoWiFiESP.SetRelayState(Relay1, true);
 #ifdef DEBUG
 		Serial.println("Fan On");
 #endif
 	}
 
 	// The fan is On and fun On duration is gone -> swich Off the fan relay
-	if(KMPProDinoMKRZero.GetRelayState(Relay1) && _fanOffTime < millis()) {
-		KMPProDinoMKRZero.SetRelayState(Relay1, false);
+	if(KMPDinoWiFiESP.GetRelayState(Relay1) && _fanOffTime < millis()) {
+		KMPDinoWiFiESP.SetRelayState(Relay1, false);
 #ifdef DEBUG
 		Serial.println("Fan Off");
 #endif
