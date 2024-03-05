@@ -15,7 +15,10 @@
 #include "FluentLight.h"
 
 #define DEBUG
-#define FAN_ON_DURATION_MS 30 * 60 * 1000 // 30 min
+#define FAN_RUNNING_DURATION_MS 30 * 60 * 1000 // 30 min
+#define LIGHT_RUNNING_DURATION_MS 3 * 60 * 1000 // 3 min
+#define LIGHT_BRIGHTEN_TIME_MS 5 * 1000 // 5 sec
+#define LIGHT_FADE_TIME_MS 1 * 60 * 1000 // 1 min
 
 bool _movements[2] {false, false};
 unsigned long _fanOffTime;
@@ -23,20 +26,19 @@ FluentLight _ledLight(EXT_GROVE_D0);
 
 void setup()
 {
-	delay(5000); // Do not block upload of new sketch
 #ifdef DEBUG
 	Serial.begin(115200);
 	Serial.println("Starting...");
 #endif
 
+	delay(5000); // Do not block upload of the new sketch
+
 	KMPDinoWiFiESP.init();
 
 	_ledLight.setMaxBrightness(1024);
-	//_ledLight.setLightOnDuration(3 * 60 * 1000); // 3 minutes
-	// For test purposes
-	_ledLight.setOnDuration(10 * 1000);
-	_ledLight.setLightOnDuration(10 * 1000);
-	_ledLight.setLightOffDuration(10 * 1000);
+	_ledLight.setRunningDuration(LIGHT_RUNNING_DURATION_MS);
+	_ledLight.setBrightenTime(LIGHT_BRIGHTEN_TIME_MS);
+	_ledLight.setFadeTime(LIGHT_FADE_TIME_MS);
 
 	_ledLight.begin();
 
@@ -79,8 +81,11 @@ void processFanLogic() {
 	bool fanOn = false;
 	if(fanInput) {
 		// Add another xx minutes
-		_fanOffTime = millis() + FAN_ON_DURATION_MS;
+		_fanOffTime = millis() + FAN_RUNNING_DURATION_MS;
 		fanOn = true;
+#ifdef DEBUG
+		Serial.println("Fan extend running time");
+#endif
 	}
 
 	// The fan has to be On and now is off -> swich On the fan relay
