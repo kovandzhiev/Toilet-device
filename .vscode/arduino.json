@@ -1,5 +1,6 @@
 {
     "board": "arduino:samd:mkrgsm1400",
     "output": "build",
-    "sketch": "src\\toiletdevice\\toiletdevice.ino"
+    "sketch": "src\\toiletdevice\\toiletdevice.ino",
+    "port": "COM5"
 }
